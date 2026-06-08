@@ -10,7 +10,28 @@ from flask import make_response
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 app.config['SECRET_KEY'] = '5a6eec382935cbfdb6f387493e29902401e44e1e39398cbe067428c9a80f956d'
 
-
+@app.route('/api/auth/refresh', methods=['POST'])
+def api_refresh():
+    data = request.get_json()
+    incoming_refresh = data.get('refresh_token')
+    
+    if not incoming_refresh:
+        return jsonify({"success": False, "message": "No refresh token provided"}), 401
+    try:
+        decoded_payload = jwt.decode(incoming_refresh, app.config['SECRET_KEY'], algorithms=['HS256'])
+        username = decoded_payload['username']
+        
+        payload_access = {
+            'username': username,
+            'exp': datetime.datetime.now() + datetime.timedelta(minutes=5)
+        } 
+        access_token = jwt.encode(payload_access, app.config['SECRET_KEY'], algorithm='HS256')
+        
+        return jsonify({"success": True, "access_token": access_token}), 200
+    except jwt.ExpiredSignatureError:
+        return jsonify({"success": False, "message": "Refresh token expired complete logout"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"success": False, "message": "Token is invalid"}), 401
 
 @app.route('/api/dashboard/verify',methods = ['GET'])
 def verify_token():
@@ -51,18 +72,25 @@ def api_signin():
 
 
     if check_password_hash(stored_hashed_password, password):
-        payload = {
+        payload_access = {
             'username': username,
-            'exp':datetime.datetime.now() + datetime.timedelta(minutes=30)
+            'exp':datetime.datetime.now() + datetime.timedelta(minutes=5)
         }
-        token = jwt.encode(payload,app.config['SECRET_KEY'],algorithm='HS256')
+        access_token = jwt.encode(payload_access,app.config['SECRET_KEY'],algorithm='HS256')
         
+        payload_refresh = {
+            'username':username,
+            'exp':datetime.datetime.now() + datetime.timedelta(days = 30)
+        }
+        refresh_token = jwt.encode(payload_refresh,app.config['SECRET_KEY'],algorithm = 'HS256')
+
         
         print("success")
 
-        return jsonify({"Success": True,
-                        "token":token,
-                        "message":"Welcome to dashboard"}),200
+        return jsonify({"success": True,
+                        "access_token":access_token,
+                        "refresh_token": refresh_token,
+                        "message":"Welcome to dashboard"})
     else:
         print("failure2")
         return jsonify({
@@ -130,9 +158,6 @@ def api_signup():
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
+if __name__ == '__main__':
+    app.run(port=8000, debug=True)
 
-    
-        
-
-if __name__== '__main__':
-    app.run(port = 8000,debug = True)

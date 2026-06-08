@@ -1,46 +1,78 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class = "dashboard_view">
+<div class="dashboard_view" style="display: none;">
     <h1 style="color: #333;">🎉 Welcome to Your Dashboard!</h1>
     <p style="color: #666;">You have successfully bypassed the login wall.</p>
     <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
     <p><strong>Account Type:</strong> Developer Mode</p>
 </div>
+
 <script>
-document.addEventListener("DOMContentLoaded", async () =>{
-const token = localStorage.getItem('token');
-if(!token){
+document.addEventListener("DOMContentLoaded", async () => {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+        window.location.href = "/signin";
+        return;
+    }
+
+    try {
+        let response = await fetch('/api/dashboard/verify', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        
+        let data = await response.json();
+        
+        if (response.status == 200 && data.success == true) {
+            document.querySelector('.dashboard_view').style.display = "block";
+            windows.location.reload()
+        } 
+        else if (data.success == false && data.message == "token expired") {
+            try {
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (!refreshToken) {
+                    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     window.location.href = "/signin";
-    return;
-}
+                    return;
+                }
 
-
-
-try{
-    let response = await fetch('/api/dashboard/verify',{method:'GET',
-    headers:{'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-    
-    
+                let refreshResponse = await fetch('/api/auth/refresh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: refreshToken })
+                });
+                
+                let data2 = await refreshResponse.json();
+                
+                if (refreshResponse.status === 200 && data2.access_token) {
+                    localStorage.setItem('access_token', data2.access_token);
+                    window.location.reload();
+                } else {
+                   localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = "/signin";
+                }
+            } catch (error) {
+                console.error(error);
+               localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = "/signin";
+            }
+        } else {
+            localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = "/signin";
+        }
+    } catch (error) {
+        console.error(error);
     }
 });
-let data = await response.json()
-if(response.status == 200 && data.success == true){
-    document.querySelector('.dashboard_view').style.display = "block";
-}
-else{
-    console.log("went to signin")
-    localStorage.removeItem('token')
-    window.location.href = "/signin";
-}
 
-
-}
-catch(error){
-    console.error("Network connection error:", error);
-}
-});
 
 </script>
 {% endblock %}

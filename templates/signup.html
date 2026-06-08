@@ -50,7 +50,8 @@
         signupForm.appendChild(weak);
     }
     else{
-        localStorage.setItem('jwt_token', result.token);
+        localStorage.setItem('access_token', result.access_token);
+        localStorage.setItem('refresh_token',result.refresh_token);
         window.location.href = "/dashboard";
     }
   });

@@ -42,8 +42,9 @@ if(result.Success == false){
     console.log("stayed on signin");
     SigninForm.appendChild(failure);
 }
-else{
-    localStorage.setItem('token', result.token);  
+else{; 
+    localStorage.setItem('access_token', result.access_token);
+    localStorage.setItem('refresh_token',result.refresh_token);
     window.location.href = "/dashboard";
 }
 });
