@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class = "dashboard_view">
+    <h1 style="color: #333;">🎉 Welcome to Your Dashboard!</h1>
+    <p style="color: #666;">You have successfully bypassed the login wall.</p>
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
+    <p><strong>Account Type:</strong> Developer Mode</p>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", async () =>{
+const token = localStorage.getItem('token');
+if(!token){
+    window.location.href = "/signin";
+    return;
+}
+
+
+
+try{
+    let response = await fetch('/api/dashboard/verify',{method:'GET',
+    headers:{'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+    
+    
+    }
+});
+let data = await response.json()
+if(response.status == 200 && data.success == true){
+    document.querySelector('.dashboard_view').style.display = "block";
+}
+else{
+    console.log("went to signin")
+    localStorage.removeItem('token')
+    window.location.href = "/signin";
+}
+
+
+}
+catch(error){
+    console.error("Network connection error:", error);
+}
+});
+
+</script>
+{% endblock %}

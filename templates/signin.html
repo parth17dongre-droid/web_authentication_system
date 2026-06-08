@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="login-container">
+  <h1>Login Page</h1>
+  
+  <form method="POST" id = "SigninForm" action="{{ url_for('signin') }}">
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username">
+    
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password">
+    
+    <button type="button" id="sign-in">Sign In</button>
+  </form>
+
+  <p><b>New user?</b></p>
+  <a href="{{ url_for('signup') }}" class="signup-button"><button>Sign up</button></a>
+</div>
+
+<script>
+async function check_user(username,password){
+    let response = await fetch('/api/dashboard/verify_signin', {  
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({username:username,password:password})
+    });
+
+    let data = await response.json()        
+    return data
+    }
+let failure = document.createElement("p");
+const username = document.querySelector('#username');
+const password = document.querySelector('#password');
+failure.textContent="WRONG USERNAME PASSWORD PAIR"
+const signin = document.querySelector('#sign-in');
+const signinForm = document.querySelector('#SigninForm');
+signin.addEventListener('click', async function(event) {
+event.preventDefault();
+let result = await check_user(username.value,password.value)
+if(result.Success == false){
+    console.log("stayed on signin");
+    SigninForm.appendChild(failure);
+}
+else{
+    localStorage.setItem('token', result.token);  
+    window.location.href = "/dashboard";
+}
+});
+</script>
+{% endblock %}
+
+

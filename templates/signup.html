@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="signup">
+  <h1>Sign up</h1>
+  <form id="signupForm">
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name">
+
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username">
+    
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password">
+    
+    <button type="button" id="enter">Sign up</button>
+  </form>
+</div>
+
+<script>  
+  let weak = document.createElement("p");
+  weak.textContent = "Password is weak";
+  weak.style.color = "red";
+
+  const username = document.querySelector('#username');
+  const password = document.querySelector('#password');
+  const submit = document.querySelector("#enter");
+  const signupForm = document.querySelector("#signupForm");
+
+  async function send_signup_data(userVal, passVal) {
+    let response = await fetch('/api/dashboard/verify_signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username: userVal, password: passVal })
+    });
+    let data = await response.json();
+    return data;
+  }
+
+  submit.addEventListener('click', async function(event){
+    event.preventDefault();
+    
+    let result = await send_signup_data(username.value, password.value);
+    
+    
+    if(result.success === false){
+        window.location.hash = '#signup';
+        signupForm.appendChild(weak);
+    }
+    else{
+        localStorage.setItem('jwt_token', result.token);
+        window.location.href = "/dashboard";
+    }
+  });
+</script> 
+{% endblock %}
