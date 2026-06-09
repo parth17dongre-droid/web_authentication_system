@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="dashboard_view" style="display: none;">
+<div id="dashboard-wrapper" class="dashboard_view" style="display: none;">
     <h1 style="color: #333;">🎉 Welcome to Your Dashboard!</h1>
     <p style="color: #666;">You have successfully bypassed the login wall.</p>
     <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
@@ -10,69 +10,45 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-        window.location.href = "/signin";
-        return;
-    }
+    async function load_dashboard(){
+        console.log("function loaded")
+        let response = await fetch('/api/dashboard/verify',{method:'GET'});
+        let response_data = await response.json();
+        console.log(response_data.success)
+        console.log(response_data.status)
+        
 
-    try {
-        let response = await fetch('/api/dashboard/verify', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+        try{
+            if(response_data.success == true){
+                console.log("access_token works")
+                return;
             }
-        });
-        
-        let data = await response.json();
-        
-        if (response.status == 200 && data.success == true) {
-            document.querySelector('.dashboard_view').style.display = "block";
-            windows.location.reload()
-        } 
-        else if (data.success == false && data.message == "token expired") {
-            try {
-                const refreshToken = localStorage.getItem('refresh_token');
-                if (!refreshToken) {
-                    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    window.location.href = "/signin";
+            else if(response_data.success == false && response.status == 401){
+                console.log("token expired chekcing for refresh_token")
+                
+                let response_refresh = await fetch('/api/auth/refresh',{method:'POST'})
+                let refresh_data = await response_refresh.json()
+                console.log(refresh_data.success)
+                if(refresh_data.success == false){
+                    console.log("session expired log in again")
+                    window.location.href = '/signin'
+                }
+                else if(refresh_data.success == true && refresh_data.status == 200){
+                    console.log("new access token made")
                     return;
                 }
 
-                let refreshResponse = await fetch('/api/auth/refresh', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refresh_token: refreshToken })
-                });
-                
-                let data2 = await refreshResponse.json();
-                
-                if (refreshResponse.status === 200 && data2.access_token) {
-                    localStorage.setItem('access_token', data2.access_token);
-                    window.location.reload();
-                } else {
-                   localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    window.location.href = "/signin";
-                }
-            } catch (error) {
-                console.error(error);
-               localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    window.location.href = "/signin";
-            }
-        } else {
-            localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    window.location.href = "/signin";
-        }
-    } catch (error) {
-        console.error(error);
-    }
-});
 
+            }
+
+        }
+        catch(error){
+            console.log("Network error")
+        }
+
+    }
+load_dashboard();
+});
 
 </script>
 {% endblock %}

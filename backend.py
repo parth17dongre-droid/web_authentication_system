@@ -12,8 +12,7 @@ app.config['SECRET_KEY'] = '5a6eec382935cbfdb6f387493e29902401e44e1e39398cbe0674
 
 @app.route('/api/auth/refresh', methods=['POST'])
 def api_refresh():
-    data = request.get_json()
-    incoming_refresh = data.get('refresh_token')
+    incoming_refresh = request.cookies.get('refresh_token')
     
     if not incoming_refresh:
         return jsonify({"success": False, "message": "No refresh token provided"}), 401
@@ -26,28 +25,22 @@ def api_refresh():
             'exp': datetime.datetime.now() + datetime.timedelta(minutes=5)
         } 
         access_token = jwt.encode(payload_access, app.config['SECRET_KEY'], algorithm='HS256')
-        
-        return jsonify({"success": True, "access_token": access_token}), 200
+        response_data =  jsonify({"Success": True,
+                        "message":"Welcome to dashboard"}),200
+        response = make_response(response_data)
+        response.set_cookie(
+            'access_token',
+            access_token,
+            httponly=True,
+            secure=False,        
+            max_age=1800)
+        return response
     except jwt.ExpiredSignatureError:
         return jsonify({"success": False, "message": "Refresh token expired complete logout"}), 401
     except jwt.InvalidTokenError:
         return jsonify({"success": False, "message": "Token is invalid"}), 401
 
-@app.route('/api/dashboard/verify',methods = ['GET'])
-def verify_token():
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"success":False,"message":"token is missing"})
-    try:
-        token = auth_header.split(" ")[1]
-        data = jwt.decode(token,app.config['SECRET_KEY'],algorithms = ['HS256'])
-        return jsonify({"success":True,"message":"Token verified","username": data['username']}),200
-    except jwt.ExpiredSignatureError:
-        return jsonify({"success":False,"message":"token expired"}),401
-    except jwt.InvalidSignatureError:
-        return jsonify({"success":False,"message":"Token is invalid"}),401
-    except jwt.InvalidTokenError: 
-        return jsonify({"success": False, "message": "Token is invalid"}), 401
+
 
 @app.route('/')
 @app.route('/signin')
@@ -86,11 +79,23 @@ def api_signin():
 
         
         print("success")
-
-        return jsonify({"success": True,
-                        "access_token":access_token,
-                        "refresh_token": refresh_token,
-                        "message":"Welcome to dashboard"})
+        response_data =  jsonify({"Success": True,
+                        "message":"Welcome to dashboard"}),200
+        response = make_response(response_data)
+        response.set_cookie(
+            'access_token',
+            access_token,
+            httponly=True,
+            secure=False,        
+            max_age=1800)
+        response.set_cookie(
+            'refresh_token',
+            refresh_token,
+            httponly=True,
+            secure=False,        
+            max_age=1800)
+        
+        return response,200
     else:
         print("failure2")
         return jsonify({
@@ -138,15 +143,34 @@ def api_signup():
         conn.commit()
         conn.close()
         print(f"User {username} was added to the database")
-        payload = {
+        payload_access = {
             'username': username,
-            'exp':datetime.datetime.now() + datetime.timedelta(minutes=30)
+            'exp':datetime.datetime.now() + datetime.timedelta(minutes=5)
         }
-        token = jwt.encode(payload,app.config['SECRET_KEY'],algorithm='HS256')
+        access_token = jwt.encode(payload_access,app.config['SECRET_KEY'],algorithm='HS256')
         
-        return jsonify({"Success": True,
-                        "token":token,
+        payload_refresh = {
+            'username':username,
+            'exp':datetime.datetime.now() + datetime.timedelta(days = 30)
+        }
+        refresh_token = jwt.encode(payload_refresh,app.config['SECRET_KEY'],algorithm = 'HS256')
+        
+        response_data =  jsonify({"Success": True,
                         "message":"Welcome to dashboard"}),200
+        response = make_response(response_data)
+        response.set_cookie(
+            'access_token',
+            access_token,
+            httponly=True,
+            secure=False,        
+            max_age=1800)
+        response.set_cookie(
+            'refresh_token',
+            refresh_token,
+            httponly=True,
+            secure=False,        
+            max_age=1800)
+        return response,200
         
         
     except sqlite3.IntegrityError:
@@ -158,6 +182,24 @@ def api_signup():
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
+
+@app.route('/api/dashboard/verify', methods=['GET'])
+def dashboard_verify():
+    access_token = request.cookies.get('access_token')
+    if not access_token:
+        return jsonify({"success":False,"message":"access token missing"}),401
+    try:
+        jwt.decode(access_token,app.config['SECRET_KEY'],algorithms = ['HS256'])
+
+        return jsonify({"success":True,"message":"token is authentic"}),200
+    except jwt.ExpiredSignatureError:
+        print("token expired")
+        return jsonify({"success":False,"message":"token expired"}),401
+    except jwt.InvalidSignatureError:
+        return jsonify({"success":False,"message":"invalid token"}),401
+    
+    
+        
+
 if __name__ == '__main__':
     app.run(port=8000, debug=True)
-
