@@ -6,6 +6,7 @@
     <p style="color: #666;">You have successfully bypassed the login wall.</p>
     <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ccc;">
     <p><strong>Account Type:</strong> Developer Mode</p>
+    <button type = "button" id = "logout">LOG OUT </button>
 </div>
 
 <script>
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         try{
             if(response_data.success == true){
                 console.log("access_token works")
+                document.getElementById('dashboard-wrapper').style.display = 'block';
                 return;
             }
             else if(response_data.success == false && response.status == 401){
@@ -35,6 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
                 else if(refresh_data.success == true && refresh_data.status == 200){
                     console.log("new access token made")
+                    document.getElementById('dashboard-wrapper').style.display = 'block';
                     return;
                 }
 
@@ -49,6 +52,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 load_dashboard();
 });
+const logout_button = document.querySelector('#logout')
+
+logout_button.addEventListener('click', async () =>{
+    let response = await fetch('/api/dashboard/logout',{method:'POST'});
+    let response_data = await response.json()
+    if(response_data.success == true){
+        window.location.href = '/signin'
+    }
+    else{
+        document.getElementById('dashboard-wrapper').style.display = 'block';
+        return;
+    }
+
+
+})
+
 
 </script>
 {% endblock %}

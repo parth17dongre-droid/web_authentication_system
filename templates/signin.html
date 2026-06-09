@@ -16,6 +16,9 @@
 
   <p><b>New user?</b></p>
   <a href="{{ url_for('signup') }}" class="signup-button"><button>Sign up</button></a>
+  <button type = "button" id = "forgot-password">FORGOT PASSWORD</button>
+    
+
 </div>
 
 <script>
@@ -46,6 +49,10 @@ else{
     window.location.href = "/dashboard";
 }
 });
+const forgot_password = document.querySelector('#forgot-password')
+forgot_password.addEventListener('click',async () =>{
+    window.location.href('/forgot_password')
+})
 </script>
 {% endblock %}
 

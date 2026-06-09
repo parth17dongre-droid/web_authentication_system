@@ -6,6 +6,8 @@
   <form id="signupForm">
     <label for="name">Name</label>
     <input type="text" id="name" name="name">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email">
 
     <label for="username">Username</label>
     <input type="text" id="username" name="username">
@@ -26,14 +28,15 @@
   const password = document.querySelector('#password');
   const submit = document.querySelector("#enter");
   const signupForm = document.querySelector("#signupForm");
+  const user_email = document.querySelector('#email')
 
-  async function send_signup_data(userVal, passVal) {
+  async function send_signup_data(userVal, passVal,email) {
     let response = await fetch('/api/dashboard/verify_signup', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ username: userVal, password: passVal })
+      body: JSON.stringify({ username: userVal, password: passVal ,user_email:email})
     });
     let data = await response.json();
     return data;
@@ -45,7 +48,7 @@
     let result = await send_signup_data(username.value, password.value);
     
     
-    if(result.success === false){
+    if(result.success == false){
         window.location.hash = '#signup';
         signupForm.appendChild(weak);
     }
