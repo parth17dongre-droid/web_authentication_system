@@ -54,6 +54,7 @@ p{
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 
 }
+
 .signup
   {
   background: rgba(255, 255, 255, 0.2);
@@ -86,7 +87,8 @@ label {
 
 
 input[type=text],
-input[type = password] {
+input[type = password],
+input[type = email]{
   width: 100%;
   padding: 12px;
   margin: 10px 0;
@@ -121,4 +123,35 @@ button:hover {
 
 button:active {
   transform: scale(0.98);
+}
+.field-row {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#new_password,
+#confirm_new_password {
+    display: inline-block !important;
+    width: 75% !important;             
+    margin: 10px 0 !important;          
+}
+
+#dola,
+#confirm_dola {
+    display: inline-block !important;
+    width: 10% !important;           
+    margin-left: 5% !important;        
+    padding: 12px 0 !important;        
+    text-align: center !important;
+    box-sizing: border-box !important; 
+    height: 22px !important;    
+    background-color: transparent !important;       
+}
+
+#enter-new-password {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px 0;
 }

@@ -6,6 +6,7 @@
   <form id="signupForm">
     <label for="name">Name</label>
     <input type="text" id="name" name="name">
+
     <label for="email">Email</label>
     <input type="email" id="email" name="email">
 
@@ -29,8 +30,9 @@
   const submit = document.querySelector("#enter");
   const signupForm = document.querySelector("#signupForm");
   const user_email = document.querySelector('#email')
+  console.log(user_email)
 
-  async function send_signup_data(userVal, passVal,email) {
+  async function send_signup_data(userVal,passVal,email) {
     let response = await fetch('/api/dashboard/verify_signup', {
       method: 'POST',
       headers: {
@@ -45,7 +47,8 @@
   submit.addEventListener('click', async function(event){
     event.preventDefault();
     
-    let result = await send_signup_data(username.value, password.value);
+    let result = await send_signup_data(username.value, password.value,user_email.value);
+    console.log(result)
     
     
     if(result.success == false){
